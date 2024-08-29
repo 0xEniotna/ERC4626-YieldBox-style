@@ -65,12 +65,24 @@ mod ERC4626Component {
         const EXCEEDED_MAX_WITHDRAW: felt252 = 'ERC4626: exceeded max withdraw';
     }
 
+    pub trait ERC4626HooksTrait<TContractState> {
+        fn before_deposit(
+            ref self: ComponentState<TContractState>,
+            liquidity: u256,
+            min_liquidity: u256,
+        );
+
+        // fn before_withdraw(
+        //     ref self: ComponentState<TContractState>,
+        // ) {}
+    }
 
     #[embeddable_as(ERC4626AdditionalImpl)]
     impl ERC4626Additional<
         TContractState, +HasComponent<TContractState>,
         +ERC20Component::HasComponent<TContractState>,
         +SRC5Component::HasComponent<TContractState>,
+        +ERC4626HooksTrait<TContractState>,
         +Drop<TContractState>
     > of IERC4626Additional<ComponentState<TContractState>> {
         fn asset(self: @ComponentState<TContractState>) -> ContractAddress {
@@ -85,13 +97,13 @@ mod ERC4626Component {
             self._convert_to_shares(assets, false)
         }
 
-        fn deposit(ref self: ComponentState<TContractState>, assets: u256, receiver: ContractAddress) -> u256 {
+        fn deposit(ref self: ComponentState<TContractState>, assets: u256, min_liquidity: u256, receiver: ContractAddress) -> u256 {
             let max_assets = self.max_deposit(receiver);
             assert(max_assets >= assets, Errors::EXCEEDED_MAX_DEPOSIT);
 
             let caller = get_caller_address();
             let shares = self.preview_deposit(assets);
-            self._deposit(caller, receiver, assets, shares);
+            self._deposit(caller, receiver, assets, min_liquidity, shares);
 
             shares
         }
@@ -113,13 +125,13 @@ mod ERC4626Component {
             self._convert_to_assets(balance, false)
         }
 
-        fn mint(ref self: ComponentState<TContractState>, shares: u256, receiver: ContractAddress) -> u256 {
+        fn mint(ref self: ComponentState<TContractState>, shares: u256, min_liquidity: u256, receiver: ContractAddress) -> u256 {
             let max_shares = self.max_mint(receiver);
             assert(max_shares >= shares, Errors::EXCEEDED_MAX_MINT);
 
             let caller = get_caller_address();
             let assets = self.preview_mint(shares);
-            self._deposit(caller, receiver, assets, shares);
+            self._deposit(caller, receiver, assets, min_liquidity, shares);
 
             assets
         }
@@ -177,6 +189,7 @@ mod ERC4626Component {
         TContractState, +HasComponent<TContractState>,
         impl erc20: ERC20Component::HasComponent<TContractState>,
         +SRC5Component::HasComponent<TContractState>,
+        +ERC4626HooksTrait<TContractState>,
         +Drop<TContractState>
     > of IERC4626Metadata<ComponentState<TContractState>> {
         fn name(self: @ComponentState<TContractState>) -> ByteArray {
@@ -197,6 +210,7 @@ mod ERC4626Component {
         TContractState, +HasComponent<TContractState>,
         impl erc20: ERC20Component::HasComponent<TContractState>,
         +SRC5Component::HasComponent<TContractState>,
+        +ERC4626HooksTrait<TContractState>,
         +Drop<TContractState>
     > of IERC4626Snake<ComponentState<TContractState>> {
         fn total_supply(self: @ComponentState<TContractState>) -> u256 {
@@ -242,6 +256,7 @@ mod ERC4626Component {
         TContractState, +HasComponent<TContractState>,
         +ERC20Component::HasComponent<TContractState>,
         +SRC5Component::HasComponent<TContractState>,
+        +ERC4626HooksTrait<TContractState>,
         +Drop<TContractState>
     > of IERC4626Camel<ComponentState<TContractState>> {
         fn totalSupply(self: @ComponentState<TContractState>) -> u256 {
@@ -266,6 +281,7 @@ mod ERC4626Component {
         TContractState, +HasComponent<TContractState>,
         impl erc20: ERC20Component::HasComponent<TContractState>,
         impl src5: SRC5Component::HasComponent<TContractState>,
+        impl Hooks: ERC4626HooksTrait<TContractState>,
         +Drop<TContractState>
     > of InternalImplTrait<TContractState> {
         fn initializer(
@@ -312,8 +328,11 @@ mod ERC4626Component {
             caller: ContractAddress,
             receiver: ContractAddress,
             assets: u256,
+            min_liquidity: u256,
             shares: u256
         ) {
+            Hooks::before_deposit(ref self, assets, min_liquidity); 
+
             let dispatcher = ERC20ABIDispatcher { contract_address: self.asset.read() };
             dispatcher.transferFrom(caller, get_contract_address(), assets);
             let mut erc20_comp_mut = get_dep_component_mut!(ref self, erc20);
@@ -350,4 +369,12 @@ mod ERC4626Component {
             self.offset.read()
         }
     }
+}
+
+impl ERC4626HooksEmptyImpl<TContractState> of ERC4626Component::ERC4626HooksTrait<TContractState> {
+    fn before_deposit(
+        ref self: ERC4626Component::ComponentState<TContractState>,
+        liquidity: u256,
+        min_liquidity: u256,
+    ) {}
 }

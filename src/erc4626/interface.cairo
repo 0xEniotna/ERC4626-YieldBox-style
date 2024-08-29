@@ -36,7 +36,7 @@ trait IERC4626<TState> {
     fn asset(self: @TState) -> starknet::ContractAddress;
     fn convert_to_assets(self: @TState, shares: u256) -> u256;
     fn convert_to_shares(self: @TState, assets: u256) -> u256;
-    fn deposit(ref self: TState, assets: u256, receiver: starknet::ContractAddress) -> u256;
+    fn deposit(ref self: TState, assets: u256, min_liquidity: u256, receiver: starknet::ContractAddress) -> u256;
     fn max_deposit(self: @TState, address: starknet::ContractAddress) -> u256;
     fn max_mint(self: @TState, receiver: starknet::ContractAddress) -> u256;
     fn max_redeem(self: @TState, owner: starknet::ContractAddress) -> u256;
@@ -95,12 +95,12 @@ trait IERC4626Additional<TState> {
     fn asset(self: @TState) -> ContractAddress;
     fn convert_to_assets(self: @TState, shares: u256) -> u256;
     fn convert_to_shares(self: @TState, assets: u256) -> u256;
-    fn deposit(ref self: TState, assets: u256, receiver: ContractAddress) -> u256;
+    fn deposit(ref self: TState, assets: u256, min_liquidity: u256, receiver: ContractAddress) -> u256;
     fn max_deposit(self: @TState, address: ContractAddress) -> u256;
     fn max_mint(self: @TState, receiver: ContractAddress) -> u256;
     fn max_redeem(self: @TState, owner: ContractAddress) -> u256;
     fn max_withdraw(self: @TState, owner: ContractAddress) -> u256;
-    fn mint(ref self: TState, shares: u256, receiver: ContractAddress) -> u256;
+    fn mint(ref self: TState, shares: u256, min_liquidity: u256, receiver: ContractAddress) -> u256;
     fn preview_deposit(self: @TState, assets: u256) -> u256;
     fn preview_mint(self: @TState, shares: u256) -> u256;
     fn preview_redeem(self: @TState, shares: u256) -> u256;
