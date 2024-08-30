@@ -69,7 +69,6 @@ mod ERC4626Component {
         fn before_deposit(
             ref self: ComponentState<TContractState>,
             liquidity: u256,
-            min_liquidity: u256,
         );
 
         // fn before_withdraw(
@@ -97,13 +96,13 @@ mod ERC4626Component {
             self._convert_to_shares(assets, false)
         }
 
-        fn deposit(ref self: ComponentState<TContractState>, assets: u256, min_liquidity: u256, receiver: ContractAddress) -> u256 {
+        fn deposit(ref self: ComponentState<TContractState>, assets: u256, receiver: ContractAddress) -> u256 {
             let max_assets = self.max_deposit(receiver);
             assert(max_assets >= assets, Errors::EXCEEDED_MAX_DEPOSIT);
 
             let caller = get_caller_address();
             let shares = self.preview_deposit(assets);
-            self._deposit(caller, receiver, assets, min_liquidity, shares);
+            self._deposit(caller, receiver, assets, shares);
 
             shares
         }
@@ -125,13 +124,13 @@ mod ERC4626Component {
             self._convert_to_assets(balance, false)
         }
 
-        fn mint(ref self: ComponentState<TContractState>, shares: u256, min_liquidity: u256, receiver: ContractAddress) -> u256 {
+        fn mint(ref self: ComponentState<TContractState>, shares: u256, receiver: ContractAddress) -> u256 {
             let max_shares = self.max_mint(receiver);
             assert(max_shares >= shares, Errors::EXCEEDED_MAX_MINT);
 
             let caller = get_caller_address();
             let assets = self.preview_mint(shares);
-            self._deposit(caller, receiver, assets, min_liquidity, shares);
+            self._deposit(caller, receiver, assets, shares);
 
             assets
         }
@@ -328,10 +327,9 @@ mod ERC4626Component {
             caller: ContractAddress,
             receiver: ContractAddress,
             assets: u256,
-            min_liquidity: u256,
             shares: u256
         ) {
-            Hooks::before_deposit(ref self, assets, min_liquidity); 
+            Hooks::before_deposit(ref self, assets); 
 
             let dispatcher = ERC20ABIDispatcher { contract_address: self.asset.read() };
             dispatcher.transferFrom(caller, get_contract_address(), assets);
@@ -375,6 +373,5 @@ impl ERC4626HooksEmptyImpl<TContractState> of ERC4626Component::ERC4626HooksTrai
     fn before_deposit(
         ref self: ERC4626Component::ComponentState<TContractState>,
         liquidity: u256,
-        min_liquidity: u256,
     ) {}
 }
