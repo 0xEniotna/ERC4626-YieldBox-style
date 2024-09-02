@@ -36,7 +36,7 @@ trait IERC4626<TState> {
     fn asset(self: @TState) -> starknet::ContractAddress;
     fn convert_to_assets(self: @TState, shares: u256) -> u256;
     fn convert_to_shares(self: @TState, assets: u256) -> u256;
-    fn deposit(ref self: TState, assets: u256, min_liquidity: u256, receiver: starknet::ContractAddress) -> u256;
+    fn deposit(ref self: TState, assets: u256, receiver: starknet::ContractAddress) -> u256;
     fn max_deposit(self: @TState, address: starknet::ContractAddress) -> u256;
     fn max_mint(self: @TState, receiver: starknet::ContractAddress) -> u256;
     fn max_redeem(self: @TState, owner: starknet::ContractAddress) -> u256;

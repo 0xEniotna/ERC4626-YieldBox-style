@@ -1,3 +1,5 @@
+use starknet::ContractAddress;
+
 #[starknet::component]
 mod ERC4626Component {
     use openzeppelin::introspection::interface::{ISRC5Dispatcher, ISRC5DispatcherTrait};
@@ -68,12 +70,34 @@ mod ERC4626Component {
     pub trait ERC4626HooksTrait<TContractState> {
         fn before_deposit(
             ref self: ComponentState<TContractState>,
-            liquidity: u256,
+            caller: ContractAddress,
+            receiver: ContractAddress,
+            assets: u256,
+            shares: u256,
         );
-
-        // fn before_withdraw(
-        //     ref self: ComponentState<TContractState>,
-        // ) {}
+        fn after_deposit(
+            ref self: ComponentState<TContractState>,
+            caller: ContractAddress,
+            receiver: ContractAddress,
+            assets: u256,
+            shares: u256,
+        );
+        fn before_withdraw(
+            ref self: ComponentState<TContractState>,
+            caller: ContractAddress,
+            receiver: ContractAddress,
+            owner: ContractAddress,
+            assets: u256,
+            shares: u256
+        );
+        fn after_withdraw(
+            ref self: ComponentState<TContractState>,
+            caller: ContractAddress,
+            receiver: ContractAddress,
+            owner: ContractAddress,
+            assets: u256,
+            shares: u256
+        );
     }
 
     #[embeddable_as(ERC4626AdditionalImpl)]
@@ -329,13 +353,15 @@ mod ERC4626Component {
             assets: u256,
             shares: u256
         ) {
-            Hooks::before_deposit(ref self, assets); 
+            Hooks::before_deposit(ref self, caller, receiver, assets, shares); 
 
             let dispatcher = ERC20ABIDispatcher { contract_address: self.asset.read() };
             dispatcher.transferFrom(caller, get_contract_address(), assets);
             let mut erc20_comp_mut = get_dep_component_mut!(ref self, erc20);
             erc20_comp_mut._mint(receiver, shares);
             self.emit(Deposit { sender: caller, owner: receiver, assets, shares });
+
+            Hooks::after_deposit(ref self, caller, receiver, assets, shares);
         }
 
         fn _withdraw(
@@ -346,6 +372,8 @@ mod ERC4626Component {
             assets: u256,
             shares: u256
         ) {
+            Hooks::before_withdraw(ref self, caller, receiver, owner, assets, shares);
+
             let mut erc20_comp_mut = get_dep_component_mut!(ref self, erc20);
             if (caller != owner) {
                 let allowance = self.allowance(owner, caller);
@@ -361,6 +389,8 @@ mod ERC4626Component {
             dispatcher.transfer(receiver, assets);
 
             self.emit(Withdraw { sender: caller, receiver, owner, assets, shares });
+
+            Hooks::after_withdraw(ref self, caller, receiver, owner, assets, shares);
         }
 
         fn _decimals_offset(self: @ComponentState<TContractState>) -> u8 {
@@ -372,6 +402,33 @@ mod ERC4626Component {
 impl ERC4626HooksEmptyImpl<TContractState> of ERC4626Component::ERC4626HooksTrait<TContractState> {
     fn before_deposit(
         ref self: ERC4626Component::ComponentState<TContractState>,
-        liquidity: u256,
+        caller: ContractAddress,
+        receiver: ContractAddress,
+        assets: u256,
+        shares: u256
+    ) {}
+    fn after_deposit(
+        ref self: ERC4626Component::ComponentState<TContractState>,
+        caller: ContractAddress,
+        receiver: ContractAddress,
+        assets: u256,
+        shares: u256
+    ) {}
+
+    fn before_withdraw(
+        ref self: ERC4626Component::ComponentState<TContractState>,
+        caller: ContractAddress,
+        receiver: ContractAddress,
+        owner: ContractAddress,
+        assets: u256,
+        shares: u256
+    ) {}
+    fn after_withdraw(
+        ref self: ERC4626Component::ComponentState<TContractState>,
+        caller: ContractAddress,
+        receiver: ContractAddress,
+        owner: ContractAddress,
+        assets: u256,
+        shares: u256
     ) {}
 }
