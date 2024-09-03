@@ -1,6 +1,6 @@
 #[starknet::contract]
 mod ERC4626 {
-    use erc4626::erc4626::erc4626::{ERC4626Component};
+    use erc4626::erc4626::erc4626::{ERC4626Component, ERC4626HooksEmptyImpl};
     use openzeppelin::introspection::src5::SRC5Component;
     use openzeppelin::token::erc20::ERC20Component;
 
