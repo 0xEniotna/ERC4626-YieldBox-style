@@ -4,7 +4,6 @@ use starknet::ContractAddress;
 mod ERC4626Component {
     use openzeppelin::introspection::interface::{ISRC5Dispatcher, ISRC5DispatcherTrait};
     use openzeppelin::introspection::src5::SRC5Component::InternalTrait as SRC5InternalTrait;
-    use openzeppelin::introspection::src5::SRC5Component::SRC5;
     use openzeppelin::introspection::src5::SRC5Component;
     
     use erc4626::erc4626::interface::{
@@ -358,7 +357,7 @@ mod ERC4626Component {
             let dispatcher = ERC20ABIDispatcher { contract_address: self.asset.read() };
             dispatcher.transferFrom(caller, get_contract_address(), assets);
             let mut erc20_comp_mut = get_dep_component_mut!(ref self, erc20);
-            erc20_comp_mut._mint(receiver, shares);
+            erc20_comp_mut.mint(receiver, shares);
             self.emit(Deposit { sender: caller, owner: receiver, assets, shares });
 
             Hooks::after_deposit(ref self, caller, receiver, assets, shares);
@@ -383,7 +382,7 @@ mod ERC4626Component {
                 }
             }
 
-            erc20_comp_mut._burn(owner, shares);
+            erc20_comp_mut.burn(owner, shares);
 
             let dispatcher = ERC20ABIDispatcher { contract_address: self.asset.read() };
             dispatcher.transfer(receiver, assets);

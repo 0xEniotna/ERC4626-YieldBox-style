@@ -45,7 +45,7 @@ mod ERC20Token {
     #[constructor]
     fn constructor(ref self: ContractState, recipient: ContractAddress, initial_supply: u256) {
         self.erc20.initializer("Mock", "MCK");
-        self.erc20._mint(recipient, initial_supply);
+        self.erc20.mint(recipient, initial_supply);
     }
 
     #[generate_trait]
@@ -53,13 +53,13 @@ mod ERC20Token {
         #[abi(per_item)]
         fn burn(ref self: ContractState, value: u256) {
             let caller = get_caller_address();
-            self.erc20._burn(caller, value);
+            self.erc20.burn(caller, value);
         }
 
         #[abi(per_item)]
         fn mint(ref self: ContractState, recipient: ContractAddress, amount: u256) {
             self.ownable.assert_only_owner();
-            self.erc20._mint(recipient, amount);
+            self.erc20.mint(recipient, amount);
         }
     }
 }

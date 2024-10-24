@@ -5,7 +5,8 @@ use erc4626::utils::{pow_256};
 use integer::BoundedU256;
 use openzeppelin::token::erc20::{ERC20ABIDispatcher, ERC20ABIDispatcherTrait};
 use snforge_std::{
-    declare, ContractClassTrait, start_prank, stop_prank, CheatTarget, start_warp, stop_warp
+    declare, ContractClassTrait, start_cheat_caller_address, stop_cheat_caller_address,
+    DeclareResultTrait
 };
 use openzeppelin::utils::serde::SerializedAppend;
 use starknet::{ContractAddress, contract_address_const, get_contract_address};
@@ -35,12 +36,12 @@ fn VAULT_ADDRESS() -> ContractAddress {
 }
 
 fn deploy_token() -> (ERC20ABIDispatcher, ContractAddress) {
-    let token = declare("ERC20Token");
+    let token = declare("ERC20Token").unwrap().contract_class();
     let mut calldata = Default::default();
     Serde::serialize(@OWNER(), ref calldata);
     Serde::serialize(@INITIAL_SUPPLY(), ref calldata);
 
-    let address = token.deploy_at(@calldata, TOKEN_ADDRESS()).unwrap();
+    let (address, _) = token.deploy_at(@calldata, TOKEN_ADDRESS()).unwrap();
     let dispatcher = ERC20ABIDispatcher { contract_address: address, };
     (dispatcher, address)
 }
@@ -54,8 +55,8 @@ fn deploy_contract() -> (ERC20ABIDispatcher, IERC4626Dispatcher) {
     calldata.append_serde(name);
     calldata.append_serde(symbol);
     calldata.append(0);
-    let vault = declare("ERC4626");
-    let contract_address = vault.deploy_at(@calldata, VAULT_ADDRESS()).unwrap();
+    let vault = declare("ERC4626").unwrap().contract_class();
+    let (contract_address, _) = vault.deploy_at(@calldata, VAULT_ADDRESS()).unwrap();
     (token, IERC4626Dispatcher { contract_address })
 }
 
@@ -123,11 +124,11 @@ fn preview_withdraw() {
 fn test_deposit() {
     let (asset, vault) = deploy_contract();
     let amount = asset.balanceOf(OWNER());
-    start_prank(CheatTarget::One(asset.contract_address), OWNER());
+    start_cheat_caller_address(asset.contract_address, OWNER());
     asset.approve(vault.contract_address, amount);
-    stop_prank(CheatTarget::One(asset.contract_address));
+    stop_cheat_caller_address(asset.contract_address);
     let result = vault.preview_deposit(amount);
-    start_prank(CheatTarget::One(vault.contract_address), OWNER());
+    start_cheat_caller_address(vault.contract_address, OWNER());
     assert(vault.deposit(amount, OWNER()) == result, 'invalid shares');
     assert(vault.balanceOf(OWNER()) == result, 'invalid balance');
 }
@@ -136,11 +137,11 @@ fn test_deposit() {
 fn test_max_redeem() {
     let (asset, vault) = deploy_contract();
     let amount = asset.balanceOf(OWNER());
-    start_prank(CheatTarget::One(asset.contract_address), OWNER());
+    start_cheat_caller_address(asset.contract_address, OWNER());
     asset.approve(vault.contract_address, amount);
-    stop_prank(CheatTarget::One(asset.contract_address));
+    stop_cheat_caller_address(asset.contract_address);
     let _result = vault.preview_deposit(amount);
-    start_prank(CheatTarget::One(vault.contract_address), OWNER());
+    start_cheat_caller_address(vault.contract_address, OWNER());
     let shares = vault.deposit(amount, OWNER());
     assert(vault.max_redeem(OWNER()) == shares, 'invalid max redeem');
 }
@@ -148,11 +149,11 @@ fn test_max_redeem() {
 fn max_withdraw() {
     let (asset, vault) = deploy_contract();
     let amount = asset.balanceOf(OWNER());
-    start_prank(CheatTarget::One(asset.contract_address), OWNER());
+    start_cheat_caller_address(asset.contract_address, OWNER());
     asset.approve(vault.contract_address, amount);
-    stop_prank(CheatTarget::One(asset.contract_address));
+    stop_cheat_caller_address(asset.contract_address);
     let _result = vault.preview_deposit(amount);
-    start_prank(CheatTarget::One(vault.contract_address), OWNER());
+    start_cheat_caller_address(vault.contract_address, OWNER());
     let _shares = vault.deposit(amount, OWNER());
     let value = vault.convert_to_assets(vault.balanceOf(OWNER()));
     assert(vault.max_withdraw(OWNER()) == value, 'invalid max withdraw');
@@ -161,12 +162,12 @@ fn max_withdraw() {
 fn mint() {
     let (asset, vault) = deploy_contract();
     let amount = asset.balanceOf(OWNER());
-    start_prank(CheatTarget::One(asset.contract_address), OWNER());
+    start_cheat_caller_address(asset.contract_address, OWNER());
     asset.approve(vault.contract_address, amount);
-    stop_prank(CheatTarget::One(asset.contract_address));
+    stop_cheat_caller_address(asset.contract_address);
     let _result = vault.preview_deposit(amount);
     let minted = vault.preview_mint(1);
-    start_prank(CheatTarget::One(vault.contract_address), OWNER());
+    start_cheat_caller_address(vault.contract_address, OWNER());
     let _shares = vault.mint(1, OWNER());
     assert(vault.balanceOf(OWNER()) == minted, 'invalid mint shares');
 }
@@ -174,15 +175,15 @@ fn mint() {
 fn test_redeem() {
     let (asset, vault) = deploy_contract();
     let amount = asset.balanceOf(OWNER());
-    start_prank(CheatTarget::One(asset.contract_address), OWNER());
+    start_cheat_caller_address(asset.contract_address, OWNER());
     asset.approve(vault.contract_address, amount);
-    stop_prank(CheatTarget::One(asset.contract_address));
+    stop_cheat_caller_address(asset.contract_address);
     let _result = vault.preview_deposit(amount);
-    start_prank(CheatTarget::One(vault.contract_address), OWNER());
+    start_cheat_caller_address(vault.contract_address, OWNER());
     let shares = vault.deposit(amount, OWNER());
     assert(vault.balanceOf(OWNER()) == shares, 'invalid balance before');
     let _preview = vault.preview_redeem(shares);
-    start_prank(CheatTarget::One(vault.contract_address), OWNER());
+    start_cheat_caller_address(vault.contract_address, OWNER());
     let _redeemed = vault.redeem(shares, OWNER(), OWNER());
     assert(vault.balanceOf(OWNER()) == 0, 'invalid balance after');
 }
@@ -191,15 +192,15 @@ fn test_redeem() {
 fn test_withdraw() {
     let (asset, vault) = deploy_contract();
     let amount = asset.balanceOf(OWNER());
-    start_prank(CheatTarget::One(asset.contract_address), OWNER());
+    start_cheat_caller_address(asset.contract_address, OWNER());
     asset.approve(vault.contract_address, amount);
-    stop_prank(CheatTarget::One(asset.contract_address));
+    stop_cheat_caller_address(asset.contract_address);
     let _result = vault.preview_deposit(amount);
-    start_prank(CheatTarget::One(vault.contract_address), OWNER());
+    start_cheat_caller_address(vault.contract_address, OWNER());
     let shares = vault.deposit(amount, OWNER());
     assert(vault.balanceOf(OWNER()) == shares, 'invalid balance before');
 
-    start_prank(CheatTarget::One(vault.contract_address), OWNER());
+    start_cheat_caller_address(vault.contract_address, OWNER());
     let _shares = vault.withdraw(amount, OWNER(), OWNER());
     assert(vault.balanceOf(OWNER()) == 0, 'invalid balance after');
 }
