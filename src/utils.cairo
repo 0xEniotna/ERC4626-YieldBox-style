@@ -1,4 +1,6 @@
-fn pow_256(self: u256, mut exponent: u8) -> u256 {
+use core::num::traits::Zero;
+
+pub fn pow_256(self: u256, mut exponent: u8) -> u256 {
     if self.is_zero() {
         return 0;
     }

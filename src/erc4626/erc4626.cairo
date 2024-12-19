@@ -1,7 +1,7 @@
 use starknet::ContractAddress;
 
 #[starknet::component]
-mod ERC4626Component {
+pub mod ERC4626Component {
     use openzeppelin::introspection::interface::{ISRC5Dispatcher, ISRC5DispatcherTrait};
     use openzeppelin::introspection::src5::SRC5Component::InternalTrait as SRC5InternalTrait;
     use openzeppelin::introspection::src5::SRC5Component;
@@ -9,8 +9,8 @@ mod ERC4626Component {
     use erc4626::erc4626::interface::{
         IERC4626Additional, IERC4626Snake, IERC4626Camel, IERC4626Metadata
     };
+    use core::num::traits::Bounded;
     use erc4626::utils::{pow_256};
-    use integer::BoundedU256;
     use openzeppelin::token::erc20::interface::{
         IERC20, IERC20Metadata, ERC20ABIDispatcher, ERC20ABIDispatcherTrait,
     };
@@ -32,7 +32,7 @@ mod ERC4626Component {
 
     #[event]
     #[derive(Drop, starknet::Event)]
-    enum Event {
+    pub enum Event {
         Deposit: Deposit,
         Withdraw: Withdraw,
     }
@@ -60,10 +60,10 @@ mod ERC4626Component {
     }
 
     mod Errors {
-        const EXCEEDED_MAX_DEPOSIT: felt252 = 'ERC4626: exceeded max deposit';
-        const EXCEEDED_MAX_MINT: felt252 = 'ERC4626: exceeded max mint';
-        const EXCEEDED_MAX_REDEEM: felt252 = 'ERC4626: exceeded max redeem';
-        const EXCEEDED_MAX_WITHDRAW: felt252 = 'ERC4626: exceeded max withdraw';
+        pub const EXCEEDED_MAX_DEPOSIT: felt252 = 'ERC4626: exceeded max deposit';
+        pub const EXCEEDED_MAX_MINT: felt252 = 'ERC4626: exceeded max mint';
+        pub const EXCEEDED_MAX_REDEEM: felt252 = 'ERC4626: exceeded max redeem';
+        pub const EXCEEDED_MAX_WITHDRAW: felt252 = 'ERC4626: exceeded max withdraw';
     }
 
     pub trait ERC4626HooksTrait<TContractState> {
@@ -131,11 +131,11 @@ mod ERC4626Component {
         }
 
         fn max_deposit(self: @ComponentState<TContractState>, address: ContractAddress) -> u256 {
-            BoundedU256::max()
+            Bounded::<u256>::MAX
         }
 
         fn max_mint(self: @ComponentState<TContractState>, receiver: ContractAddress) -> u256 {
-            BoundedU256::max()
+            Bounded::<u256>::MAX
         }
 
         fn max_redeem(self: @ComponentState<TContractState>, owner: ContractAddress) -> u256 {
@@ -299,7 +299,7 @@ mod ERC4626Component {
     }
 
     #[generate_trait]
-    impl InternalImpl<
+    pub impl InternalImpl<
         TContractState, +HasComponent<TContractState>,
         impl erc20: ERC20Component::HasComponent<TContractState>,
         impl src5: SRC5Component::HasComponent<TContractState>,
@@ -376,7 +376,7 @@ mod ERC4626Component {
             let mut erc20_comp_mut = get_dep_component_mut!(ref self, erc20);
             if (caller != owner) {
                 let allowance = self.allowance(owner, caller);
-                if (allowance != BoundedU256::max()) {
+                if (allowance != Bounded::<u256>::MAX) {
                     assert(allowance >= shares, ERC20Errors::APPROVE_FROM_ZERO);
                     erc20_comp_mut.ERC20_allowances.write((owner, caller), allowance - shares);
                 }
@@ -398,7 +398,7 @@ mod ERC4626Component {
     }
 }
 
-impl ERC4626HooksEmptyImpl<TContractState> of ERC4626Component::ERC4626HooksTrait<TContractState> {
+pub impl ERC4626HooksEmptyImpl<TContractState> of ERC4626Component::ERC4626HooksTrait<TContractState> {
     fn before_deposit(
         ref self: ERC4626Component::ComponentState<TContractState>,
         caller: ContractAddress,

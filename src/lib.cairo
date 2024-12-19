@@ -1,6 +1,9 @@
-mod erc4626;
+pub mod erc4626 {
+    pub mod erc4626;
+    pub mod interface;
+}
 mod preset {
-    mod ERC4626;
+    pub mod ERC4626;
 }
 
 #[cfg(test)]
