@@ -3,7 +3,7 @@ name = "erc4626"
 version = "0.1.0"
 
 [dependencies]
-openzeppelin = { git = "https://github.com/OpenZeppelin/cairo-contracts.git", rev = "v0.18.0"}
+openzeppelin = "0.18.0"
 starknet = ">=2.6.0"
 
 [dev-dependencies]
