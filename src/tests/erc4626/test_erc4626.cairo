@@ -1,13 +1,12 @@
 use core::traits::TryInto;
-use debug::PrintTrait;
 use erc4626::erc4626::interface::{IERC4626Dispatcher, IERC4626DispatcherTrait};
 use erc4626::utils::{pow_256};
-use integer::BoundedU256;
 use openzeppelin::token::erc20::{ERC20ABIDispatcher, ERC20ABIDispatcherTrait};
 use snforge_std::{
     declare, ContractClassTrait, start_cheat_caller_address, stop_cheat_caller_address,
     DeclareResultTrait
 };
+use core::num::traits::Bounded;
 use openzeppelin::utils::serde::SerializedAppend;
 use starknet::{ContractAddress, contract_address_const, get_contract_address};
 
@@ -88,13 +87,13 @@ fn convert_to_shares() {
 #[test]
 fn max_deposit() {
     let (_asset, vault) = deploy_contract();
-    assert(vault.max_deposit(get_contract_address()) == BoundedU256::max(), 'invalid max deposit');
+    assert(vault.max_deposit(get_contract_address()) == Bounded::<u256>::MAX, 'invalid max deposit');
 }
 
 #[test]
 fn max_mint() {
     let (_asset, vault) = deploy_contract();
-    assert(vault.max_mint(get_contract_address()) == BoundedU256::max(), 'invalid max mint');
+    assert(vault.max_mint(get_contract_address()) == Bounded::<u256>::MAX, 'invalid max mint');
 }
 
 #[test]
