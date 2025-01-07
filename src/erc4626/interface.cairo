@@ -1,12 +1,12 @@
 use starknet::ContractAddress;
 
 #[starknet::interface]
-trait IERC4626<TState> {
+pub trait IERC4626<TState> {
     // ************************************
     // * Metadata
     // ************************************
-    fn name(self: @TState) -> felt252;
-    fn symbol(self: @TState) -> felt252;
+    fn name(self: @TState) -> ByteArray;
+    fn symbol(self: @TState) -> ByteArray;
     fn decimals(self: @TState) -> u8;
 
     // ************************************
@@ -63,14 +63,14 @@ trait IERC4626<TState> {
 
 
 #[starknet::interface]
-trait IERC4626Metadata<TState> {
-    fn name(self: @TState) -> felt252;
-    fn symbol(self: @TState) -> felt252;
+pub trait IERC4626Metadata<TState> {
+    fn name(self: @TState) -> ByteArray;
+    fn symbol(self: @TState) -> ByteArray;
     fn decimals(self: @TState) -> u8;
 }
 
 #[starknet::interface]
-trait IERC4626Camel<TState> {
+pub trait IERC4626Camel<TState> {
     fn totalSupply(self: @TState) -> u256;
     fn balanceOf(self: @TState, account: ContractAddress) -> u256;
     fn transferFrom(
@@ -79,7 +79,7 @@ trait IERC4626Camel<TState> {
 }
 
 #[starknet::interface]
-trait IERC4626Snake<TState> {
+pub trait IERC4626Snake<TState> {
     fn total_supply(self: @TState) -> u256;
     fn balance_of(self: @TState, account: ContractAddress) -> u256;
     fn allowance(self: @TState, owner: ContractAddress, spender: ContractAddress) -> u256;
@@ -91,7 +91,7 @@ trait IERC4626Snake<TState> {
 }
 
 #[starknet::interface]
-trait IERC4626Additional<TState> {
+pub trait IERC4626Additional<TState> {
     fn asset(self: @TState) -> ContractAddress;
     fn convert_to_assets(self: @TState, shares: u256) -> u256;
     fn convert_to_shares(self: @TState, assets: u256) -> u256;

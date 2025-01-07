@@ -1,6 +1,7 @@
-# ERC4626 inflation attack free
+# Cairo ERC4626 Component [inflation attack free]
 
-An implementation of ERC4626 in Cairo.
+An implementation of ERC4626 Component in Cairo. Forked from https://github.com/0xEniotna/ERC4626. Below is the original readme. 
+--------
 
 I used the [OZ solidity](https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/extensions/ERC4626.sol#L239) implementation. It is itself inspired from YieldBox codebase that has an inflation attack protection. Shares are virtually minted which reduces the issue.
 
